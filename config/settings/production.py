@@ -3,7 +3,7 @@
 from urllib.parse import urlparse
 
 from config.settings.base import *  # noqa: F401,F403
-from config.settings.base import ALLOWED_HOSTS, RENDER_EXTERNAL_URL
+from config.settings.base import ALLOWED_HOSTS, PUBLIC_BASE_URL
 
 DEBUG = False
 
@@ -19,9 +19,10 @@ SECURE_HSTS_SECONDS = 86400
 SECURE_HSTS_INCLUDE_SUBDOMAINS = False
 SECURE_HSTS_PRELOAD = False
 
-# Render assigns the public hostname dynamically via RENDER_EXTERNAL_URL —
-# add it automatically so a forgotten ALLOWED_HOSTS entry can't 400 the webhook.
-if RENDER_EXTERNAL_URL:
-    _render_host = urlparse(RENDER_EXTERNAL_URL).netloc
-    if _render_host and _render_host not in ALLOWED_HOSTS:
-        ALLOWED_HOSTS.append(_render_host)
+# The host platform (Render, Railway, ...) assigns the public hostname
+# dynamically — add it automatically so a forgotten ALLOWED_HOSTS entry
+# can't 400 the webhook.
+if PUBLIC_BASE_URL:
+    _public_host = urlparse(PUBLIC_BASE_URL).netloc
+    if _public_host and _public_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_public_host)

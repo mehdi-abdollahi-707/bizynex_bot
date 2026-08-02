@@ -35,7 +35,15 @@ class Settings(BaseSettings):
     ADMIN_ID: int
     WEBHOOK_SECRET: str
     WEBHOOK_PATH: str = "/webhook/"
-    RENDER_EXTERNAL_URL: str | None = None
+
+    # The app's own public URL, needed to register the Telegram webhook and
+    # to self-ping for the keep-alive task. Never set more than one of
+    # these by hand — PUBLIC_BASE_URL is the explicit, platform-agnostic
+    # override; the other two are auto-injected by their respective
+    # platforms and read automatically if PUBLIC_BASE_URL isn't set.
+    PUBLIC_BASE_URL: str | None = None
+    RENDER_EXTERNAL_URL: str | None = None  # Render: full URL, auto-injected
+    RAILWAY_PUBLIC_DOMAIN: str | None = None  # Railway: bare domain, auto-injected
 
     KEEPALIVE_ENABLED: bool = True
     KEEPALIVE_INTERVAL_SECONDS: int = 780
@@ -50,6 +58,20 @@ class Settings(BaseSettings):
     @property
     def allowed_hosts_list(self) -> list[str]:
         return [host.strip() for host in self.ALLOWED_HOSTS.split(",") if host.strip()]
+
+    @property
+    def resolved_public_base_url(self) -> str | None:
+        """The app's public URL, in priority order: explicit override,
+        Render's (already a full URL), Railway's (a bare domain, needs a
+        scheme prepended). None if not deployed behind any of these yet.
+        """
+        if self.PUBLIC_BASE_URL:
+            return self.PUBLIC_BASE_URL.rstrip("/")
+        if self.RENDER_EXTERNAL_URL:
+            return self.RENDER_EXTERNAL_URL.rstrip("/")
+        if self.RAILWAY_PUBLIC_DOMAIN:
+            return f"https://{self.RAILWAY_PUBLIC_DOMAIN.rstrip('/')}"
+        return None
 
 
 @lru_cache

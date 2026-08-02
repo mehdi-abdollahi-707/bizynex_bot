@@ -34,11 +34,11 @@ async def _on_startup() -> None:
     from core.infrastructure.telegram.bot_factory import get_bot
     from core.infrastructure.telegram.keepalive import run_keepalive_loop
 
-    if not settings.RENDER_EXTERNAL_URL:
-        logger.info("startup.webhook_registration_skipped", reason="no RENDER_EXTERNAL_URL")
+    if not settings.PUBLIC_BASE_URL:
+        logger.info("startup.webhook_registration_skipped", reason="no PUBLIC_BASE_URL")
         return
 
-    base_url = settings.RENDER_EXTERNAL_URL.rstrip("/")
+    base_url = settings.PUBLIC_BASE_URL
 
     bot = get_bot()
     webhook_url = f"{base_url}{settings.WEBHOOK_PATH}"
