@@ -56,11 +56,12 @@ ASGI_APPLICATION = "config.asgi.application"
 WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {
-    "default": dj_database_url.parse(
-        settings.DATABASE_URL,
-        conn_max_age=60,
-        ssl_require=settings.ENVIRONMENT == "production",
-    ),
+    # No forced ssl_require here: whether a connection needs SSL depends on
+    # the specific host (Render's does; Railway's internal Postgres
+    # networking doesn't), not on ENVIRONMENT. If a given DATABASE_URL
+    # needs SSL, add `?sslmode=require` to that URL directly — dj-database-url
+    # already parses querystring params like that into OPTIONS automatically.
+    "default": dj_database_url.parse(settings.DATABASE_URL, conn_max_age=60),
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
