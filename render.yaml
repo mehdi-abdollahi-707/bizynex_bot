@@ -1,0 +1,58 @@
+# Render Blueprint — see https://render.com/docs/blueprint-spec
+#
+# Deploys the Bizynex Telegram bot as a single web service on Render's
+# free plan, backed by a free-tier PostgreSQL database.
+#
+# Two free-tier facts worth knowing before you deploy (details in
+# README.md):
+#   1. The free Postgres instance below expires 30 days after creation
+#      and is deleted unless upgraded to a paid plan.
+#   2. The app's own keep-alive self-ping (built into the app, not
+#      configured here — see core/infrastructure/telegram/keepalive.py)
+#      is what keeps this free web service from sleeping after 15
+#      minutes of inactivity.
+#
+# If this Blueprint fails to parse due to a Render schema change, the
+# README's manual dashboard walkthrough covers the exact same setup.
+
+services:
+  - type: web
+    name: bizynex-bot
+    runtime: python
+    plan: free
+    region: frankfurt
+    buildCommand: "pip install -r requirements.txt && python manage.py migrate --noinput"
+    startCommand: "gunicorn config.asgi:application -k uvicorn.workers.UvicornWorker --workers 1 --timeout 60 --bind 0.0.0.0:$PORT"
+    healthCheckPath: /health/
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bizynex-db
+          property: connectionString
+      - key: BOT_TOKEN
+        sync: false
+      - key: ADMIN_ID
+        sync: false
+      - key: WEBHOOK_SECRET
+        generateValue: true
+      - key: WEBHOOK_PATH
+        value: /webhook/
+      - key: KEEPALIVE_ENABLED
+        value: "True"
+      - key: KEEPALIVE_INTERVAL_SECONDS
+        value: "780"
+      - key: LOG_LEVEL
+        value: INFO
+      # RENDER_EXTERNAL_URL is injected automatically by Render at deploy
+      # time — do not set it manually, and it isn't listed here.
+
+databases:
+  - name: bizynex-db
+    plan: free
+    region: frankfurt
