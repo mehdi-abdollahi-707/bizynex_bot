@@ -27,6 +27,15 @@ _keepalive_task: asyncio.Task | None = None
 
 
 async def _on_startup() -> None:
+    """Registers the Telegram webhook and starts the keep-alive task.
+
+    Neither side effect is allowed to prevent the ASGI server itself from
+    starting: a health check's job is to confirm the web server is up, not
+    that every startup side effect succeeded. A bad token, a transient
+    Telegram API hiccup, or a host with restricted outbound access should
+    mean "the bot doesn't receive updates yet" — logged loudly — not "the
+    whole service is down."
+    """
     global _keepalive_task
 
     from django.conf import settings
@@ -40,28 +49,34 @@ async def _on_startup() -> None:
 
     base_url = settings.PUBLIC_BASE_URL
 
-    bot = get_bot()
-    webhook_url = f"{base_url}{settings.WEBHOOK_PATH}"
-    await bot.set_webhook(
-        url=webhook_url,
-        secret_token=settings.WEBHOOK_SECRET,
-        drop_pending_updates=False,
-    )
-    logger.info("startup.webhook_registered", url=webhook_url)
+    try:
+        bot = get_bot()
+        webhook_url = f"{base_url}{settings.WEBHOOK_PATH}"
+        await bot.set_webhook(
+            url=webhook_url,
+            secret_token=settings.WEBHOOK_SECRET,
+            drop_pending_updates=False,
+        )
+        logger.info("startup.webhook_registered", url=webhook_url)
+    except Exception:
+        logger.exception("startup.webhook_registration_failed", url=base_url)
 
     if settings.KEEPALIVE_ENABLED:
-        health_url = f"{base_url}/health/"
-        _keepalive_task = asyncio.create_task(
-            run_keepalive_loop(
+        try:
+            health_url = f"{base_url}/health/"
+            _keepalive_task = asyncio.create_task(
+                run_keepalive_loop(
+                    url=health_url,
+                    interval_seconds=settings.KEEPALIVE_INTERVAL_SECONDS,
+                )
+            )
+            logger.info(
+                "startup.keepalive_started",
                 url=health_url,
                 interval_seconds=settings.KEEPALIVE_INTERVAL_SECONDS,
             )
-        )
-        logger.info(
-            "startup.keepalive_started",
-            url=health_url,
-            interval_seconds=settings.KEEPALIVE_INTERVAL_SECONDS,
-        )
+        except Exception:
+            logger.exception("startup.keepalive_start_failed")
 
 
 async def _on_shutdown() -> None:
