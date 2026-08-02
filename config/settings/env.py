@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: Literal["development", "production"] = "development"
     DEBUG: bool = False
     SECRET_KEY: str
-    ALLOWED_HOSTS: str = "localhost,127.0.0.1"
+    ALLOWED_HOSTS: str = "healthcheck.railway.app"
 
     DATABASE_URL: str
 
