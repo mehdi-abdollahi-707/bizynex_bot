@@ -35,6 +35,8 @@ services:
         fromDatabase:
           name: bizynex-db
           property: connectionString
+      - key: DATABASE_SSL_REQUIRE
+        value: "True"
       - key: BOT_TOKEN
         sync: false
       - key: ADMIN_ID

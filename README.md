@@ -177,7 +177,11 @@ Render dashboard → **New → Web Service** → connect this repository.
 
 **3. Set environment variables**
 
-In the web service's **Environment** tab: same table as Railway's step 3 above, except `DATABASE_URL` is the Internal Database URL from step 1 (paste it directly, no reference syntax).
+In the web service's **Environment** tab: same table as Railway's step 3 above, except `DATABASE_URL` is the Internal Database URL from step 1 (paste it directly, no reference syntax). Also add:
+
+| Variable | Value |
+|---|---|
+| `DATABASE_SSL_REQUIRE` | `True` |
 
 Do **not** set `RENDER_EXTERNAL_URL` or `PUBLIC_BASE_URL` — Render injects `RENDER_EXTERNAL_URL` automatically, and the app reads it to register the Telegram webhook and to extend `ALLOWED_HOSTS` at startup.
 
@@ -207,6 +211,7 @@ See [`.env.example`](.env.example) for the full list with inline explanations. S
 | `SECRET_KEY` | yes | Django's cryptographic signing key |
 | `ALLOWED_HOSTS` | no | defaults to `localhost,127.0.0.1`; production auto-adds the deployed host |
 | `DATABASE_URL` | yes | PostgreSQL connection string |
+| `DATABASE_SSL_REQUIRE` | no | defaults to `False`; set `True` on Render (its `render.yaml` already does) |
 | `BOT_TOKEN` | yes | from BotFather |
 | `ADMIN_ID` | yes | numeric Telegram user ID for request notifications |
 | `WEBHOOK_SECRET` | yes | verifies incoming webhook calls are really from Telegram |

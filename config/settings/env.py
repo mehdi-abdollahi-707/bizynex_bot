@@ -27,9 +27,15 @@ class Settings(BaseSettings):
     ENVIRONMENT: Literal["development", "production"] = "development"
     DEBUG: bool = False
     SECRET_KEY: str
-    ALLOWED_HOSTS: str = "healthcheck.railway.app"
+    ALLOWED_HOSTS: str = "localhost,127.0.0.1"
 
     DATABASE_URL: str
+    # Whether SSL is needed depends on the specific database host, not on
+    # ENVIRONMENT: Render's Postgres generally needs it; Railway's internal
+    # networking generally doesn't. Off by default (safe for local dev and
+    # unknown hosts); set explicitly per platform — render.yaml sets this
+    # to True for Render's own database.
+    DATABASE_SSL_REQUIRE: bool = False
 
     BOT_TOKEN: str
     ADMIN_ID: int
